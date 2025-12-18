@@ -40,6 +40,7 @@
   "scripts": {
     "dev": "nodemon -x ts-node src/index.ts",
     "compile": "shx rm -rf lib/ && tsc",
+    "build": "npm run compile",
     "start": "node lib/index.js",
     "prettier": "npx prettier \"**/*.ts\" --write",
     "mocha": "cross-env NODE_ENV=test mocha test/ --require ts-node/register --recursive --extension .ts --exit",
