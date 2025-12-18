@@ -1,8 +1,9 @@
 FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci 
 COPY . .
-RUN npm run build 2>/dev/null || echo "No build"
+RUN npm run build 
+ENV NODE_ENV=production 
 EXPOSE 8080
 CMD ["npm", "start"]
