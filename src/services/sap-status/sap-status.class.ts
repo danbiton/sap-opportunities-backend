@@ -24,6 +24,7 @@ export class SapStatusService {
         }}
        )
        console.log("res:", results.data.value)
+       console.log("len:", results.data.value.length)
 
     return results.data.value
 

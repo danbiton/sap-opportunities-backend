@@ -9,10 +9,14 @@ import axios from 'axios';
 export interface OpportunitiesServiceOptions {
   app: Application
 }
+interface Accounts {
+  id: string
+  name: string
+}
 
 interface CreateOpportunityData {
-  name: string;
-  accountIds: string[];
+  oppName: string;
+  accounts: Accounts[];
   // ownerId: string;
   salesCycleCode: string;
   salesPhaseCode: string;
@@ -25,53 +29,54 @@ export class OpportunitiesService {
   constructor(app: Application) { }
 
 
- async find(params?: Params) {
-  const baseUrl = process.env.BASE_URL_SAP;
-  const opportunityUrl = process.env.URL_OPPORTUNITY;
+  async find(params?: Params) {
+    const baseUrl = process.env.BASE_URL_SAP;
+    const opportunityUrl = process.env.URL_OPPORTUNITY;
 
-  try {
-    const response = await axios.get(
-      `${baseUrl}/${opportunityUrl}`,
-      {
-        auth: {
-          username: process.env.USER || '',
-          password: process.env.PASSWORD_SAP || ''
+    try {
+      const response = await axios.get(
+        `${baseUrl}/${opportunityUrl}`,
+        {
+          auth: {
+            username: process.env.USER || '',
+            password: process.env.PASSWORD_SAP || ''
+          }
         }
-      }
-    );
+      );
 
-    console.log('📥 Opportunities from SAP:', response.data);
-    return response.data;
+      console.log('📥 Opportunities from SAP:', response.data);
+      return response.data;
 
-  } catch (error: any) {
-    console.error('❌ Error:', error.response?.data || error.message);
-    throw error;
+    } catch (error: any) {
+      console.error('❌ Error:', error.response?.data || error.message);
+      throw error;
+    }
   }
-}
   async create(data: CreateOpportunityData, params?: Params): Promise<any> {
 
 
 
     const baseUrl = process.env.BASE_URL_SAP
     const opportunityUrl = process.env.URL_OPPORTUNITY
-    const { name,  accountIds, salesCycleCode, salesPhaseCode, lifeCycleStatus, processingTypeCode } = data;
+    const { oppName, accounts, salesCycleCode, salesPhaseCode, lifeCycleStatus, processingTypeCode } = data;
     const results = [];
 
-    for (const accountId of accountIds) {
+    for (const account of accounts) {
+      const accountName = account.name.substring(0, account.name.lastIndexOf(' '))
+      console.log("accountName", accountName)
+      const fullOpportunityName = `${accountName}-${oppName}`
       try {
         const response = await axios.post(
           `${baseUrl}/${opportunityUrl}`,
           {
-            name: name,
+            name: fullOpportunityName,
             account: {
-              id: accountId  
+              id: account.id
             },
-            // owner: {
-            //   id: ownerId
-            // },
+            
             salesCycle: salesCycleCode,
             salesPhase: salesPhaseCode,
-            status: lifeCycleStatus,
+            customStatus: lifeCycleStatus,
             category: processingTypeCode,
             currencyCode: "USD"
           },
@@ -84,22 +89,22 @@ export class OpportunitiesService {
         );
 
         results.push({
-          accountId, 
+          account,
           success: true,
           opportunity: response.data
         });
 
       } catch (error: any) {
         results.push({
-          accountId,  
-          success: false,  
+          accounts,
+          success: false,
           error: error.response?.data || error.message
         });
       }
     }
 
     return {
-      total: accountIds.length,
+      total: accounts.length,
       successful: results.filter(r => r.success).length,
       failed: results.filter(r => !r.success).length,
       results
